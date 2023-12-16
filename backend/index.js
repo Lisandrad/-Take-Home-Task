@@ -8,44 +8,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var express = require("express");
-var dbConection_1 = require("./dbConection");
-var mongodb_1 = require("mongodb");
-var app = express();
-var test = dbConection_1.default;
+const express = require("express");
+const dbConection_1 = require("./dbConection");
+const mongodb_1 = require("mongodb");
+const cors = require('cors');
+const app = express();
+const test = dbConection_1.default;
+const corsOptions = {
+    origin: '*', // Reemplaza con el dominio permitido
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    optionsSuccessStatus: 204,
+};
 app.use(express.json());
-var PORT = 8000;
-var _db;
+app.use(cors(corsOptions));
+const PORT = 8000;
+let _db;
 function setDb() {
-    (0, dbConection_1.default)().then(function (dbConnected) {
+    (0, dbConection_1.default)().then(dbConnected => {
         if (dbConnected) {
             _db = dbConnected;
         }
@@ -55,115 +35,77 @@ function setDb() {
     });
 }
 //endPoint
-app.get('/Task', function (req, resp) { return __awaiter(void 0, void 0, void 0, function () {
-    var taskColection, task, error_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                taskColection = _db.collection('Task');
-                return [4 /*yield*/, taskColection.find({}).toArray()];
-            case 1:
-                task = _a.sent();
-                resp.send(task);
-                return [3 /*break*/, 3];
-            case 2:
-                error_1 = _a.sent();
-                resp.status(500).send('Error al buscar usuarios');
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+app.get('/Task', (req, resp) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const taskColection = _db.collection('Task');
+        const task = yield taskColection.find({}).toArray(); // Buscar usuarios en la base de datos
+        resp.send(task);
+    }
+    catch (error) {
+        resp.status(500).json('Error al buscar usuarios');
+    }
+}));
+app.post('/Task', (req, resp) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const newTask = _db.collection('Task');
+        const { taskName, description, assignedTo, status } = req.body;
+        const tasksObject = {
+            taskName,
+            description,
+            assignedTo,
+            status,
+            createAt: new Date(),
+        };
+        console.log(req.body);
+        const result = yield newTask.insertOne(tasksObject);
+        if (result.insertedId) {
+            resp.status(201).json({ message: 'Tarea agregada exitosamente' });
         }
-    });
-}); });
-app.post('/Task', function (req, resp) { return __awaiter(void 0, void 0, void 0, function () {
-    var newTask, _a, taskName, description, assignedTo, status_1, tasksObject, result, error_2;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 2, , 3]);
-                newTask = _db.collection('Task');
-                _a = req.body, taskName = _a.taskName, description = _a.description, assignedTo = _a.assignedTo, status_1 = _a.status;
-                tasksObject = {
-                    taskName: taskName,
-                    description: description,
-                    assignedTo: assignedTo,
-                    status: status_1,
-                    createAt: new Date(),
-                };
-                return [4 /*yield*/, newTask.insertOne(tasksObject)];
-            case 1:
-                result = _b.sent();
-                if (result.insertedId) {
-                    resp.status(201).send('Tarea agregada exitosamente');
-                }
-                else {
-                    resp.status(500).send('Error al agregar la tarea');
-                }
-                return [3 /*break*/, 3];
-            case 2:
-                error_2 = _b.sent();
-                resp.status(500).send('Error al agregar la tarea');
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+        else {
+            resp.status(500).json('Error al agregar la tarea');
         }
-    });
-}); });
+    }
+    catch (error) {
+        resp.status(500).json('Error al agregar la tarea');
+    }
+}));
 //method PUT
-app.put('/task', function (req, resp) { return __awaiter(void 0, void 0, void 0, function () {
-    var taskToEdit, taskToUpdate, _a, taskName, description, assignedTo, taskId, updatedFields, updatedTask, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
-            case 0:
-                _c.trys.push([0, 2, , 3]);
-                taskToEdit = _db.collection('Task');
-                taskToUpdate = req.body;
-                _a = req.body, taskName = _a.taskName, description = _a.description, assignedTo = _a.assignedTo;
-                taskId = taskToUpdate._id;
-                updatedFields = {
-                    taskName: taskName,
-                    description: description,
-                    assignedTo: assignedTo,
-                    createAt: new Date(),
-                };
-                console.log(taskId);
-                console.table(updatedFields);
-                return [4 /*yield*/, taskToEdit.findOneAndUpdate({ _id: new mongodb_1.ObjectId(taskId) }, { $set: updatedFields })];
-            case 1:
-                updatedTask = _c.sent();
-                resp.status(200).json({ success: true, updatedTask: updatedTask });
-                return [3 /*break*/, 3];
-            case 2:
-                _b = _c.sent();
-                resp.status(500).json({ success: false });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
+app.put('/task', (req, resp) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const taskToEdit = _db.collection('Task');
+        const taskToUpdate = req.body;
+        const { taskName, description, assignedTo } = req.body;
+        const taskId = taskToUpdate._id;
+        const updatedFields = {
+            taskName,
+            description,
+            assignedTo,
+            createAt: new Date(),
+        };
+        console.log(taskId);
+        console.table(updatedFields);
+        const updatedTask = yield taskToEdit.findOneAndUpdate({ _id: new mongodb_1.ObjectId(taskId) }, { $set: updatedFields });
+        resp.status(200).json({ success: true, updatedTask });
+    }
+    catch (_a) {
+        resp.status(500).json({ success: false });
+    }
+}));
 //DELETE METHOD
-app.delete('/task', function (req, resp) { return __awaiter(void 0, void 0, void 0, function () {
-    var taskToDelete, taskDeleted, taskId, result, error_3;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                taskToDelete = _db.collection('Task');
-                taskDeleted = req.body;
-                taskId = taskDeleted._id;
-                return [4 /*yield*/, taskToDelete.findOneAndDelete({ _id: new mongodb_1.ObjectId(taskId) })];
-            case 1:
-                result = _a.sent();
-                resp.status(200).json({ success: true, result: result });
-                return [3 /*break*/, 3];
-            case 2:
-                error_3 = _a.sent();
-                resp.status(400).json('Errroooooooorrrrrrr');
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
-app.listen(PORT, function () {
+app.delete('/task', (req, resp) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const taskToDelete = _db.collection('Task');
+        const taskDeleted = req.body;
+        const taskId = taskDeleted._id;
+        console.log(req.body);
+        const result = yield taskToDelete.findOneAndDelete({ _id: new mongodb_1.ObjectId(taskId) });
+        resp.status(200).json({ success: true, result });
+    }
+    catch (error) {
+        resp.status(400).json('Errroooooooorrrrrrr');
+    }
+}));
+app.listen(PORT, () => {
     setDb();
-    console.log("Server running on http://localhost:".concat(PORT));
+    console.log(`Server running on http://localhost:${PORT}`);
 });
